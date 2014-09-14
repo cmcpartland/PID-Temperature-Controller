@@ -1,0 +1,244 @@
+<!-- Created by Connor McPartland
+University of Pittsburgh 2013 
+Contact: cmcpartland91@gmail.com-->
+
+<html>
+<head>
+<title>PID Temperature Controller</title>
+<style type="text/css">
+body {background-color: #eeeeee; margin: 10px; padding: 5px}
+a {align: left; color: black; font-size: 8pt; font-family: default; font-style: normal; font-weight: normal}
+p {align: left; color: black; font-size: 8pt; font-family: default; font-style: normal; font-weight: normal}
+h1 {align: center; font-size: 18pt; font-family: default; font-style: normal; font-weight: bold}
+h2 {align: left; font-size: 16pt; font-family: default; font-style: normal; font-weight: normal}
+h3 {align: left; font-size: 14pt; font-family: default; font-style: normal; font-weight: normal}
+h4 {align: left; font-size: 12pt; font-family: default; font-style: normal; font-weight: normal}
+h5 {align: left; font-size: 10pt; font-family: default; font-style: normal; font-weight: normal}
+h6 {align: left; font-size: 8pt; font-family: default; font-style: normal; font-weight: normal}
+object {align: left}
+table {align: center}
+</style>
+</head>
+
+<body>
+<h2>Temperature (&#176; C)</h2>
+
+<object classid='mpl.Plot2D' id='plot' width='100%' height='300'>
+</object>
+<br/>
+<h5>Current Temperature (&#176; C)</h5>
+<object classid='TextBox' id='current_temp' width='25%'>
+	<param name='read_only' value='True'/>
+</object>
+<p>        </p>
+<object classid='Button' id='set_temp_button' width='25%'>
+	<param name='label' value='Set Temperature'/>
+	<param name='action' value='PID_interface.set_temp'/>
+</object>
+<object classid='NumBox' id='set_temp_box' width='15%'>
+	<param name='maximum' value='500'/>
+	<param name='minimum' value='-273'/>
+	<param name='label' value='Set Temp'/>
+</object>
+<p> &#176;C	</p>
+<object classid='CheckBox' id='auto_collect'>
+	<param name='label' value='Begin Temperature Collection on Set-Temperature Change'/>
+</object>
+
+<object classid='CheckBox' id='save_temp_data'>
+	<param name='label' value='Save temperature data to .txt file'/>
+</object>
+<hr/>
+<object classid='Button' id='start_data' width='33.33%'>
+    <param name='label' value='Start Temperature Collection'/>
+    <param name='action' value='PID_interface.start_data_collection'/>
+</object>
+<object classid='Button' id='stop_data' width='33.33%'>
+	<param name='toggle' value='True'/>
+    <param name='label' value='Stop Temperature Collection'/>
+</object>
+<object classid='Button' width='33.33%'>
+    <param name='label' value='Clear Plot'/>
+    <param name='action' value='PID_interface.clear_plot'/>
+</object>
+<br/>
+
+<hr/>
+<h3>Parameter Controls </h3> 
+<!-- <h5>(Equation Used: PID_output = last_output + P*(error - last_error) + (I*It)*(error) + (D/Dt)*(lastlast_error - 2*last_error + error)</h5> -->
+
+<hr/>
+<!-- <h4>	P Parameter		  I Parameter		   It Parameter	 	     D Parameter		      Dt Parameter</h4> -->
+<!--<h4>		P Parameter		  		  I Parameter	  			    D Parameter		</h4>-->
+<table width='100%' border="1">
+<tr><td width='25%'>
+<h4>P Parameter</h4>
+<object classid='qwt.Knob' id='P_knob' width='100%'>
+	<param name='action' value='PID_interface.set_P_box'/>
+	<param name='border_width' value='1'/>
+	<param name='minimum' value='-80'/>
+	<param name='maximum' value='80'/>
+	<param name='step' value='1'/>
+	<param name='scale_step' value='10'/>
+	<param name='knob_width' value='100'/>
+</object>
+</td><td width='25%'>
+<h4>I Parameter</h4>
+<object classid='qwt.Knob' id='I_knob' width='100%'>
+	<param name='action' value='PID_interface.set_I_box'/>
+	<param name='tracking' value='False'/>
+	<param name='minimum' value='-20'/>
+	<param name='maximum' value='20'/>
+	<param name='step' value='.5'/>
+	<param name='scale_step' value='4'/>
+	<param name='knob_width' value='100'/>
+</object>
+</td><!-- <td width='18%'>  -->
+<!-- <object classid='qwt.Knob' id='It_knob' width='100%'>
+	<param name='action' value='PID_interface.set_It_box'/>
+	<param name='tracking' value='False'/>
+	<param name='minimum' value='.1'/>
+	<param name='maximum' value='10.0'/>
+	<param name='step' value='.5'/>
+	<param name='scale_step' value='1'/>
+	<param name='knob_width' value='100'/>
+</object> -->
+<!-- </td> --><td width='25%'>
+<h4>D Parameter</h4>
+<object classid='qwt.Knob' id='D_knob' width='100%'>
+	<param name='action' value='PID_interface.set_D_box'/>
+	<param name='tracking' value='False'/>
+	<param name='minimum' value='-500'/>
+	<param name='maximum' value='500'/>
+	<param name='step' value='5'/>
+	<param name='scale_step' value='100'/>
+	<param name='knob_width' value='100'/>
+</object>
+</td><!-- <td width='18%'> 
+<object classid='qwt.Knob' id='Dt_knob' width='100%'>
+	<param name='action' value='PID_interface.set_Dt_box'/>
+	<param name='tracking' value='False'/>
+	<param name='minimum' value='1'/>
+	<param name='maximum' value='10'/>
+	<param name='step' value='.5'/>
+	<param name='scale_step' value='2'/>
+	<param name='knob_width' value='100'/>
+</object>
+</td> --></tr>
+<tr><td width='25%'>
+<object classid='NumBox' id='P_result_box' width='100%'>
+	<param name='action' value='PID_interface.set_P_parameter'/>
+	<param name='digits' value='5'/>
+	<param name='maximum' value='80'/>
+	<param name='minimum' value='-80'/>
+</object>
+</td><td width='25%'>
+<object classid='NumBox' id='I_result_box' width='100%'>
+	<param name='action' value='PID_interface.set_I_parameter'/>
+	<param name='digits' value='5'/>
+	<param name='maximum' value='20'/>
+	<param name='minimum' value='-20'/>
+</object>
+</td><td width='25%'>
+<object classid='NumBox' id='D_result_box' width='100%'>
+	<param name='action' value='PID_interface.set_D_parameter'/>
+	<param name='digits' value='5'/>
+	<param name='maximum' value='500'/>
+	<param name='minimum' value='-500'/>
+</object>
+</td></tr>
+</table>
+<hr/>
+
+
+
+<!-- <object classid='NumBox' id='It_result_box' width='33.33%'>
+	<param name='action' value='PID_interface.set_It_parameter'/>
+	<param name='digits' value='3'/>
+	<param name='maximum' value='30'/>
+	<param name='minimum' value='-30'/>
+</object> -->
+
+<!-- <object classid='NumBox' id='Dt_result_box' width='33.33%'>
+	<param name='action' value='PID_interface.set_Dt_parameter'/>
+	<param name='digits' value='3'/>
+	<param name='maximum' value='10'/>
+	<param name='minimum' value='-10'/>
+</object> -->
+<br/>
+<object classid='Button' id='save_params_button' width='66.6%'>
+	<param name='label' value='Save Current Parameters'/>
+	<param name='action' value='PID_interface.save_parameters'/>
+</object>
+<object classid='TextBox' id='save_status' width='33.3%'>
+	<param name='read_only' value='True'/>
+</object>
+<hr/>
+<h4>Display Current Parameters from Arduino</h4>
+<object classid='Button' id='display_params_button' width='15%'>
+	<param name='label' value='Display Parameters'/>
+	<param name='action' value='PID_interface.get_params'/>
+</object>
+<object classid='TextBox' id='params_box' width='75%'>
+	<param name='read_only' value='True'/>
+</object>
+<hr/>
+<h4>Connect to Arduino</h4>
+<hr/>
+<object classid='CheckBox' id='manual_com_choice'>
+	<param name='label' value='Manually choose COM'/>
+	<param name='action' value='PID_interface.activate_com_choice'/>
+</object>
+<object classid='NumBox' id='com_choice' width='10%'>
+	<param name='digits' value='0'/>
+	<param name='increment' value='1'/>
+	<param name='minimum' value='1'/>
+	<param name='maximum' value='99'/>
+</object>
+<object classid='Button' id ='connect_button' width='30%'>
+	<param name='label' value='Connect'/>
+	<param name='action' value='PID_interface.connect_arduino'/>
+</object>
+<object classid='Button' id='disconnect_button' width='30%'>
+	<param name='label' value='Disconnect'/>
+	<param name='action' value='PID_interface.disconnect'/>
+</object>
+<h6>Status</h6>
+<object classid='TextBox' id='connected_result' width='60%'>
+	<param name='read_only' value='True'/>
+</object>
+
+<h3>Messages</h3>
+
+<object classid='TextIOBox' id='messages' width='100%' height='200'>
+</object>
+<br/>
+<object classid='Button'>
+	<param name='label' value='Clear Messages'/>
+	<param name='action' value='PID_interface.clear_messages'/>
+</object>
+<hr/>
+
+<br/>
+<object classid='MessageDialog' id='save_params_message' width='100%'>
+    <param name='message' value='Parameters not saved! Do you wish to save them?'/>
+    <param name='yes_button' value='True'/>
+    <param name='no_button' value='True'/>
+    <param name='severity' value='critical'/>
+	<param name='label' value=''/>
+</object>
+<object classid='MessageDialog' id='error_message' width='100%'>
+	<param name='message' value='An unexpected error has occurred. Recommend disconnect from Arduino, then reconnect.'/>
+	<param name='ok_button' value='True'/>
+	<param name='severity' value='critical'/>
+	<param name='label' value=''/>
+</object>
+<object classid='ScriptLoader' width='0%'>
+    <param name='filename' value='PID_interface'/>
+	<param name='initialization_action' value='PID_interface.initialize'/>
+	<param name='termination_action' value='PID_interface.terminate'/>
+	<param name='label' value=''/>
+</object>
+
+</body>
+</html>
